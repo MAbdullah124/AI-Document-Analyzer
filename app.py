@@ -87,33 +87,58 @@ def ask_ai(prompt):
             "Please add API_KEY to Streamlit Secrets."
         )
 
-    try:
+    models = [
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite"
+    ]
 
-        response = client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt
-        )
+    last_error = ""
 
-        return response.text
+    for model_name in models:
 
-    except Exception as e:
+        try:
 
-        error_message = str(e)
-
-        if "429" in error_message:
-            return (
-                "❌ API quota/rate limit reached.\n\n"
-                "Please wait and try again later, or check your "
-                "Gemini API usage and limits."
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt
             )
 
-        if "401" in error_message or "403" in error_message:
-            return (
-                "❌ API authentication failed.\n\n"
-                "Please check your Gemini API key."
-            )
+            if response.text:
+                return response.text
 
-        return f"❌ AI request failed:\n\n{error_message}"
+            return "❌ Gemini returned an empty response."
+
+        except Exception as e:
+
+            last_error = str(e)
+
+            # Try the next model if the current model
+            # is temporarily unavailable.
+            if "503" in last_error:
+                continue
+
+            # API quota
+            if "429" in last_error:
+                return (
+                    "❌ Gemini API quota/rate limit reached.\n\n"
+                    "Please wait and try again later."
+                )
+
+            # Authentication
+            if "401" in last_error or "403" in last_error:
+                return (
+                    "❌ Gemini API authentication failed.\n\n"
+                    "Please check your API key."
+                )
+
+            # Other error
+            return f"❌ AI request failed:\n\n{last_error}"
+
+    return (
+        "⚠️ Gemini is temporarily experiencing high demand.\n\n"
+        "I tried the available models, but they are currently "
+        "unavailable. Please wait a little and click the button again."
+    )
 
 
 # ============================================================
