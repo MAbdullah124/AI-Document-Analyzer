@@ -90,7 +90,7 @@ def ask_ai(prompt):
     try:
 
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.6-flash",
             contents=prompt
         )
 
@@ -795,6 +795,12 @@ if st.session_state.document_text:
             height=300,
             disabled=True
         )
+
+# ============================================================
+# CURRENT DOCUMENT TEXT
+# ============================================================
+
+document_text = st.session_state.document_text
 
 
 # ============================================================
